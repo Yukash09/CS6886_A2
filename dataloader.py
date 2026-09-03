@@ -13,7 +13,7 @@ def get_test_data(batch_size: int = 128) :
         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
     ])
 
-    test_data = datasets.CIFAR10(root="./data" , train=False, download=True, transform=test_transform)
+    test_data = datasets.CIFAR10(root="/kaggle/input/datasets/pankrzysiu/cifar10-python/" , train=False, download=True, transform=test_transform)
     print(f"Test Data len: {len(test_data)}")
 
     test_loader = DataLoader(dataset=test_data, batch_size=batch_size, shuffle=False)
@@ -29,7 +29,7 @@ def get_train_data(batch_size:int = 128) :
         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
     ])
 
-    data = datasets.CIFAR10(root="./data", train=True, download=True, transform=train_transform)
+    data = datasets.CIFAR10(root="/kaggle/input/datasets/pankrzysiu/cifar10-python/", train=True, download=True, transform=train_transform)
     generator = torch.Generator().manual_seed(3)
     train_data , val_data = random_split(data, [int(0.85*len(data)) , len(data) - int(0.85*len(data))] , generator)
 
