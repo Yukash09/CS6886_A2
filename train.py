@@ -70,12 +70,12 @@ def train():
                 total_val += labels.size(0)
 
                 if (idx + 1) % 20 == 0:
-                    print(f"Validation Batch {idx}/{len(val_data)} , Loss: {epoch_val_loss:.4f}")
+                    print(f"Validation Batch {idx}/{len(val_data)} , Loss: {val_loss.item():.4f}")
         
         val_accuracy = correct_val/total_val 
         valid_loss = epoch_val_loss/len(val_data)
 
-        print(f"Train Accuracy:{val_accuracy:.4f} , Train_loss:{valid_loss:.4f}")
+        print(f"Validation Accuracy:{val_accuracy:.4f} , Validation_loss:{valid_loss:.4f}")
 
         scheduler.step(val_accuracy)
 
@@ -107,9 +107,9 @@ if __name__ == "__main__":
             'name':'val_acc'
         },
         'parameters':{
-            'lr':{'values': [0.001, 0.0005, 0.0001]},
+            'lr':{'values': [0.001, 0.0005]},
             'batch_size':{'values':[64 , 128]},
-            'epoch':{'values':[15 , 25]}
+            'epoch':{'values':[20]}
         }
     }
 
