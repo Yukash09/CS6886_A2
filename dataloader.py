@@ -1,3 +1,4 @@
+from torchvision.datasets import CIFAR10
 import torch 
 import torch.nn as nn 
 import torchvision
@@ -26,6 +27,7 @@ def get_train_data(batch_size:int = 128) :
         transforms.RandomCrop(32, padding=4),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
+        transforms.AutoAugment(transforms.AutoAugmentPolicy.CIFAR10),
         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
     ])
 

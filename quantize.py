@@ -84,8 +84,6 @@ def model_size(model , bits : dict[str , int]):
 
     print(f"Original Size:{original_size} bytes")
     print(f"Compressed Size:{compressed_size} bytes")
-    print(f"Compression Ratio:{compression_ratio} bytes")
+    print(f"Compression Ratio:{compression_ratio}")
 
     return original_size , compressed_size , compression_ratio
-
-    
