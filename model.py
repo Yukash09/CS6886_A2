@@ -2,8 +2,8 @@ import torch.nn as nn
 from torchvision.models import mobilenet_v2, MobileNet_V2_Weights
 from typing import cast
 
-def get_model():
-    model = mobilenet_v2(weights=MobileNet_V2_Weights.IMAGENET1K_V1)
+def get_model(pretrained=True):
+    model = mobilenet_v2(weights=MobileNet_V2_Weights.IMAGENET1K_V1 if pretrained else None)
 
     # We will change the stride = 1 for the first layer since CIFAR-10, which has 32x32 images. This will retain resolution in the early layers. 
     fblock = cast(nn.Conv2d , cast(nn.Sequential, model.features[0])[0])
