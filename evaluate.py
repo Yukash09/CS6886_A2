@@ -1,3 +1,4 @@
+from quantize import hawq_alloc
 import torch 
 import copy
 from model import get_model
@@ -34,7 +35,7 @@ def model_loader(path , device):
 
     return model 
 
-def evaluate_quantize(model , test_data , device , config , mode):
+def evaluate_quantize(model , test_data , device , config , mode , loss_fn):
     model = copy.deepcopy(model)
 
     weight_bits = {}
@@ -46,6 +47,10 @@ def evaluate_quantize(model , test_data , device , config , mode):
     elif config.policy == "uniform":
        weight_bits = uniform_alloc(model , config.unif_bits)
        act_bits = uniform_alloc(model , config.act_unif_bits) 
+
+    elif config.policy == "HAWQ":
+        weight_bits = hawq_alloc(model , test_data , device , loss_fn , config.end_bits , config.int_bits , config.mid_bits , config.ratio)
+        act_bits = uniform_alloc(model , config.act_unif_bits)
 
     else:
         raise(NotImplementedError)

@@ -100,16 +100,16 @@ def train():
 
 if __name__ == "__main__":
     config = {
-        'method': 'bayes',
+        'method': 'grid',
         'name': "Fine-Tuning-Sweep",
         'metric':{
             'goal':'maximize',
             'name':'val_acc'
         },
         'parameters':{
-            'lr':{'values': [0.05, 0.1 , 0.01]},
+            'lr':{'values': [0.01]},
             'batch_size':{'values':[128]},
-            'epoch':{'values':[100]}
+            'epoch':{'values':[200]}
         }
     }
 

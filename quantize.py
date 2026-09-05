@@ -1,5 +1,3 @@
-
-from google.protobuf import wrappers_pb2
 from torch import tensor
 from torch import Tensor
 import torch.nn as nn 
@@ -44,6 +42,56 @@ def apply_quantization(model , weight_bits : dict[str , int] , act_bits : dict[s
         
     return model
 
+def sensitivity(model , data , device , loss_fn , num=10):
+    model.eval()
+
+    sensitivities = {}
+    names = []
+    params = []
+
+    for name , module in model.named_modules():
+        if isinstance(module , (nn.Conv2d , nn.Linear)):
+            names.append(name)
+            params.append(module.weight)
+
+    count = 0 
+    for idx , (images , labels) in enumerate(data):
+        count += 1 
+        images = images.to(device)
+        labels = labels.to(device)
+        logits = model(images)
+        loss = loss_fn(logits , labels)
+
+        grads = torch.autograd.grad(loss , params , create_graph=True)
+
+        v = [torch.randn_like(weights) for weights in params]
+        for weights in v:
+            weights.div_(torch.norm(weights) + 1e-6)
+
+        eigenvalues = []
+        for _i in range(num):
+            curr_grad = torch.stack([torch.sum(grad * weights) for grad, weights in zip(grads, v)]).sum()
+            for grad , weights in zip(grads , v):
+                curr_grad += torch.sum(grad * weights)
+
+            hvp = torch.autograd.grad(curr_grad , params , retain_graph=True) # type: ignore
+
+            eigenvalues = []
+
+            for j in range(len(v)):
+                norm = torch.norm(hvp[j])
+                v[j] = hvp[j] / (norm + 1e-6)
+                eigenvalues.append(torch.sum(v[j] * hvp[j]).item())
+        
+        for i in range(0 , len(names)):
+            sensitivities[names[i]] = abs(eigenvalues[i])
+
+
+        if count == 1:
+            break
+
+    return sensitivities
+
 def uniform_alloc(model , unif_bits : int):
     bits : dict[str , int] = {}
     for name , module in model.named_modules():
@@ -77,6 +125,30 @@ def mixed_uniform_alloc(model , end_bits : int , int_bits : int):
     
     return bits 
 
+def hawq_alloc(model , data , device , loss_fn , end_bits , int_bits , mid_bits , ratio):
+    
+    weight_bits = {}
+    sensitivities = sensitivity(model, data, device, loss_fn, num=10)
+    layers = sorted(sensitivities.keys(), key=lambda k: sensitivities[k], reverse=True)
+    siz = len(layers)
+    tot = 0 
+
+    for idx , name in enumerate(layers):
+        if idx < siz*ratio:
+            weight_bits[name] = end_bits 
+            tot += end_bits
+        elif idx >= siz - siz*ratio:
+            weight_bits[name] = int_bits
+            tot += int_bits
+        else:
+            weight_bits[name] = mid_bits
+            tot += mid_bits
+    
+    print("HAWQ Allocation bits:")
+    print(weight_bits)
+    print(f"Avg bits:{(tot / siz):.4f}")
+
+    return weight_bits 
 
 def model_size(model , bits : dict[str , int]):
 
