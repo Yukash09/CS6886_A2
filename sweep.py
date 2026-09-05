@@ -53,7 +53,7 @@ def sweep_fn():
             reinit=True
         )
 
-        accuracy , w_ratio , a_ratio = evaluate_quantize(model , test_data , device , cfg , mode="PTQ", loss_fn=loss_fn)
+        accuracy , w_ratio , a_ratio = evaluate_quantize(model , test_data , device , wandb.config , mode="PTQ", loss_fn=loss_fn)
 
         wandb.log({
             "baseline_acc": baseline_acc,
