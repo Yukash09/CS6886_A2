@@ -107,9 +107,9 @@ if __name__ == "__main__":
             'name':'val_acc'
         },
         'parameters':{
-            'lr':{'values': [0.1, 0.05]},
+            'lr':{'values': [0.05, 0.1 , 0.01]},
             'batch_size':{'values':[128]},
-            'epoch':{'values':[80]}
+            'epoch':{'values':[100]}
         }
     }
 
