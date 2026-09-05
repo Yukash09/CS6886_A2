@@ -1,3 +1,6 @@
+
+from google.protobuf import wrappers_pb2
+from torch import tensor
 from torch import Tensor
 import torch.nn as nn 
 import torch
@@ -16,13 +19,25 @@ def dequantize_weights(tensor : Tensor , s : Tensor):
 
     return r 
 
-def apply_quantization(model , bits : dict[str , int] , mode : str):
+def quantize_act_hook(bits: int):
+    def hook(module , inputs):
+        tensor = inputs[0]
+        qmax = (1 << (bits-1)) - 1 
+        qmin = -(1 << (bits-1))
+        s = torch.clamp(torch.amax(torch.abs(tensor) , dim=tuple(range(1 , tensor.dim())) , keepdim=True) / qmax , min=1e-8) # torch.amax - specify dimensions to take max along that dimension alone. 
+        q = torch.clamp(torch.round(tensor/s) , qmin , qmax) 
+        r = q * s 
+        return r
+    return hook 
+
+def apply_quantization(model , weight_bits : dict[str , int] , act_bits : dict[str , int] , mode : str):
 
     if mode == "PTQ":
         for name , module in model.named_modules():
             if isinstance(module , (nn.Conv2d , nn.Linear)):
-                q , s = quantize_weights(module.weight.data , bits[name])
+                q , s = quantize_weights(module.weight.data , weight_bits[name])
                 module.weight.data = dequantize_weights(q , s)
+                module.register_forward_pre_hook(quantize_act_hook(act_bits[name]))
 
     elif mode == "QAT":
         raise(NotImplementedError)
@@ -87,3 +102,44 @@ def model_size(model , bits : dict[str , int]):
     print(f"Compression Ratio:{compression_ratio}")
 
     return original_size , compressed_size , compression_ratio
+
+
+def activation_size(model, act_bits: dict[str, int], device):
+    dummy_input = torch.zeros(1, 3, 32, 32).to(device)
+    
+    act_original_count = 0
+    act_comp_count = 0
+    
+    shapes = {}
+    def get_shape_hook(name):
+        def hook(module, inputs, output):
+            shapes[name] = inputs[0].numel()
+        return hook
+        
+    hooks = []
+    for name, module in model.named_modules():
+        if isinstance(module, (nn.Conv2d, nn.Linear)):
+            hooks.append(module.register_forward_hook(get_shape_hook(name)))
+            
+    model.eval()
+    with torch.no_grad():
+        model(dummy_input)
+        
+    for h in hooks:
+        h.remove()
+        
+    for name in shapes:
+        numel = shapes[name]
+        act_original_count += numel * 32
+        act_comp_count += numel * act_bits[name]
+        act_comp_count += 32 
+        
+    original_size = act_original_count / 8
+    compressed_size = act_comp_count / 8
+    ratio = original_size / compressed_size if compressed_size > 0 else 0
+    
+    print(f"Act Original Size:{original_size} bytes")
+    print(f"Act Compressed Size:{compressed_size} bytes")
+    print(f"Act Compression Ratio:{ratio}")
+    
+    return original_size, compressed_size, ratio

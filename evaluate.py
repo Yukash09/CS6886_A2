@@ -2,7 +2,7 @@ import torch
 import copy
 from model import get_model
 from dataloader import get_test_data
-from quantize import mixed_uniform_alloc , apply_quantization , model_size , uniform_alloc
+from quantize import mixed_uniform_alloc , apply_quantization , model_size , uniform_alloc, activation_size
 
 def test(model , test_data , device):
     model.eval() 
@@ -37,23 +37,27 @@ def model_loader(path , device):
 def evaluate_quantize(model , test_data , device , config , mode):
     model = copy.deepcopy(model)
 
-    bits = {}
+    weight_bits = {}
+    act_bits = {}
     if config.policy == "mixed":
-        bits = mixed_uniform_alloc(model , config.end_bits , config.int_bits)
+        weight_bits = mixed_uniform_alloc(model , config.end_bits , config.int_bits)
+        act_bits = mixed_uniform_alloc(model , config.act_end_bits , config.act_int_bits)
 
     elif config.policy == "uniform":
-        bits = uniform_alloc(model , config.unif_bits)
+       weight_bits = uniform_alloc(model , config.unif_bits)
+       act_bits = uniform_alloc(model , config.act_unif_bits) 
 
     else:
         raise(NotImplementedError)
 
-    original_size , compressed_size , ratio = model_size(model , bits)
+    original_size , compressed_size , w_ratio = model_size(model , weight_bits)
+    act_original_size , act_compressed_size , a_ratio = activation_size(model , act_bits , device)
 
-    model = apply_quantization(model , bits , mode)
+    model = apply_quantization(model , weight_bits , act_bits , mode)
 
     accuracy = test(model , test_data , device)
 
-    return accuracy , ratio
+    return accuracy , w_ratio , a_ratio
 
 
 

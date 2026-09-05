@@ -8,12 +8,14 @@ def make_configs():
     configs = []
 
     for bits in [2 , 3 , 4 , 5 , 6 , 8]:
-        configs.append({"policy": "uniform" , "unif_bits": bits , "end_bits": 0 , "int_bits": 0})
+        for act_bits in [4 , 6 , 8]:
+            configs.append({"policy": "uniform" , "unif_bits": bits , "act_unif_bits": act_bits , "end_bits": 0 , "int_bits": 0 , "act_end_bits": 0 , "act_int_bits": 0})
 
     for end in [4 , 6 , 8]:
         for mid in [2 , 3 , 4 , 5 , 6 , 8]:
             if mid < end:
-                configs.append({"policy": "mixed" , "unif_bits": 0 , "end_bits": end , "int_bits": mid})
+                for act_mid in [4 , 6 , 8]:
+                    configs.append({"policy": "mixed" , "unif_bits": 0 , "act_unif_bits": 0 , "end_bits": end , "int_bits": mid , "act_end_bits": 8 , "act_int_bits": act_mid})
 
     return configs
 
@@ -37,14 +39,14 @@ def sweep_fn():
             reinit=True
         )
 
-        config = wandb.config
-        accuracy , ratio = evaluate_quantize(model , test_data , device , config , mode="PTQ")
+        accuracy , w_ratio , a_ratio = evaluate_quantize(model , test_data , device , cfg , mode="PTQ")
 
         wandb.log({
             "baseline_acc": baseline_acc,
             "quantized_acc": accuracy,
             "acc_drop": baseline_acc - accuracy,
-            "compression_ratio": ratio,
+            "w_compression_ratio": w_ratio,
+            "a_compression_ratio": a_ratio,
         })
 
         wandb.finish()
