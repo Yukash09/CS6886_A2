@@ -26,12 +26,12 @@ def get_train_data(batch_size:int = 128) :
     train_transform = transforms.Compose([
         transforms.RandomCrop(32, padding=4),
         transforms.RandomHorizontalFlip(),
-        transforms.AutoAugment(transforms.AutoAugmentPolicy.CIFAR10),
+        # transforms.AutoAugment(transforms.AutoAugmentPolicy.CIFAR10),
         transforms.ToTensor(),
         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
     ])
 
-    data = datasets.CIFAR10(root="/kaggle/input/datasets/pankrzysiu/cifar10-python/", train=True, download=False, transform=train_transform)
+    data = datasets.CIFAR10(root="/kaggle/input/datasets/pankrzysiu/cifar10-python/", train=True, download=False, transform=train_transform) # dataset path in kaggle
     generator = torch.Generator().manual_seed(3)
     train_data , val_data = random_split(data, [int(0.85*len(data)) , len(data) - int(0.85*len(data))] , generator)
 

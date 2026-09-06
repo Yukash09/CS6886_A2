@@ -39,7 +39,7 @@ def sweep_fn():
     test_data = get_test_data()
 
     model = model_loader(path , device)
-    baseline_acc = test(model , test_data , device)
+    baseline_acc, baseline_loss = test(model , test_data , device)
     loss_fn = nn.CrossEntropyLoss()
 
     configs = make_configs()
@@ -50,7 +50,8 @@ def sweep_fn():
         run = wandb.init(
             project="CS6886_Assignment2",
             config=cfg,
-            reinit=True
+            reinit=True,
+            group="Quantization"
         )
 
         accuracy , w_ratio , a_ratio = evaluate_quantize(model , test_data , device , wandb.config , mode="PTQ", loss_fn=loss_fn)

@@ -7,7 +7,7 @@ import wandb
 
 
 def train():
-    wandb.init(project="CS6886_Assignment2")
+    wandb.init(project="CS6886_Assignment2", group="Fine-Tuning")
     cfg = wandb.config
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu") 
@@ -16,8 +16,10 @@ def train():
     train_data , val_data = get_train_data(batch_size=cfg.batch_size)
 
     loss_fn = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters() , lr=cfg.lr , momentum=0.9 , weight_decay=0.0005)
-    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=cfg.epoch)
+    # optimizer = optim.SGD(model.parameters() , lr=cfg.lr , momentum=0.9 , weight_decay=0.0005)
+    # scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=cfg.epoch)
+    optimizer = optim.Adam(model.parameters() , lr=cfg.lr)
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max' , factor=0.5 , patience=3)
 
     best_acc = 0.0 
 
@@ -77,7 +79,8 @@ def train():
 
         print(f"Validation Accuracy:{val_accuracy:.4f} , Validation_loss:{valid_loss:.4f}")
 
-        scheduler.step()
+        # scheduler.step()
+        scheduler.step(val_accuracy)
 
         wandb.log({
             "epoch":epoch , 
@@ -107,9 +110,9 @@ if __name__ == "__main__":
             'name':'val_acc'
         },
         'parameters':{
-            'lr':{'values': [0.01]},
-            'batch_size':{'values':[128]},
-            'epoch':{'values':[200]}
+            'lr':{'values': [0.001, 0.0005, 0.0001]},
+            'batch_size':{'values':[64 , 128]},
+            'epoch':{'values':[15 , 25]}
         }
     }
 
