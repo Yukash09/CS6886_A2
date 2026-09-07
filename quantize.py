@@ -160,7 +160,7 @@ def mixed_uniform_alloc(model , end_bits : int , int_bits : int):
 def hawq_alloc(model , data , device , loss_fn , end_bits , int_bits , mid_bits , ratio):
     
     ''' 
-    HAWQ based allocation - The layers are split it into three blocks (based on descending order of their sensitivity).
+    HAWQ based allocation - The layers are split into into three blocks (based on descending order of their sensitivity).
     - The top 'ratio'% of the layers get 'end_bits' of precision.
     - The bottom 'ratio'% of the layers get 'int_bits' of precision.
     - Remaining layers get 'mid_bits' of precision

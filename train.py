@@ -120,4 +120,4 @@ if __name__ == "__main__":
     }
 
     sweep_id = wandb.sweep(config, project="CS6886_Assignment2")
-    wandb.agent(sweep_id, function=train , count=12) # Don't let bayes run forever?
+    wandb.agent(sweep_id, function=train)

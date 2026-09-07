@@ -6,7 +6,7 @@ import torch.nn as nn
 
 def make_configs():
     '''
-    Create different possible configuration for each hyperparameter variable for each allocation strategy
+    Create different possible configurations for each hyperparameter variable for each allocation strategy
     '''
 
     configs = []

@@ -71,9 +71,6 @@ def evaluate_quantize(model , test_data , device , config , loss_fn):
         weight_bits = hawq_alloc(model , test_data , device , loss_fn , config.end_bits , config.int_bits , config.mid_bits , config.ratio)
         act_bits = uniform_alloc(model , config.act_unif_bits)
 
-    # else:
-    #     raise(NotImplementedError) 
-
     _original_size , _compressed_size , w_ratio = model_size(model , weight_bits)
     _act_original_size , _act_compressed_size , a_ratio = activation_size(model , act_bits , device)
 
