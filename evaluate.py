@@ -1,5 +1,6 @@
 from quantize import hawq_alloc
-import torch 
+import wandb
+import torch
 import torch.nn as nn
 import copy
 from model import get_model
@@ -7,6 +8,9 @@ from dataloader import get_test_data
 from quantize import mixed_uniform_alloc , apply_quantization , model_size , uniform_alloc, activation_size
 
 def test(model , test_data , device, loss_fn=nn.CrossEntropyLoss()):
+    '''
+    Function used for inference - Both Quantized models hyperparameter sweep and Original model
+    '''
     model.eval() 
 
     correct = 0 
@@ -37,12 +41,20 @@ def test(model , test_data , device, loss_fn=nn.CrossEntropyLoss()):
     return accuracy, avg_loss
 
 def model_loader(path , device):
+
+    '''
+    Loads the model into device from the given path
+    '''
+
     model = get_model(pretrained=False).to(device)
     model.load_state_dict(torch.load(path , device , weights_only=True)['state_dict'])
 
     return model 
 
-def evaluate_quantize(model , test_data , device , config , mode , loss_fn):
+def evaluate_quantize(model , test_data , device , config , loss_fn):
+    '''
+    Copies the original model and applies quantization and then runs inference.
+    '''
     model = copy.deepcopy(model)
 
     weight_bits = {}
@@ -59,13 +71,13 @@ def evaluate_quantize(model , test_data , device , config , mode , loss_fn):
         weight_bits = hawq_alloc(model , test_data , device , loss_fn , config.end_bits , config.int_bits , config.mid_bits , config.ratio)
         act_bits = uniform_alloc(model , config.act_unif_bits)
 
-    else:
-        raise(NotImplementedError)
+    # else:
+    #     raise(NotImplementedError) 
 
-    original_size , compressed_size , w_ratio = model_size(model , weight_bits)
-    act_original_size , act_compressed_size , a_ratio = activation_size(model , act_bits , device)
+    _original_size , _compressed_size , w_ratio = model_size(model , weight_bits)
+    _act_original_size , _act_compressed_size , a_ratio = activation_size(model , act_bits , device)
 
-    model = apply_quantization(model , weight_bits , act_bits , mode)
+    model = apply_quantization(model , weight_bits , act_bits)
 
     accuracy, _ = test(model , test_data , device)
 
@@ -74,14 +86,12 @@ def evaluate_quantize(model , test_data , device , config , mode , loss_fn):
 
 
 if __name__ == "__main__":
-    import wandb
-    import torch.nn as nn
     wandb.init(project="CS6886_Assignment2", name="non-quantized", group="non-quantized")
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     path = "./checkpoints/best_model.pth"
     test_data = get_test_data()
-    model = model_loader(path , device)
+    model = model_loader(path , device)  # Load model from the saved checkpoint.
     
     loss_fn = nn.CrossEntropyLoss()
     original_acc, original_loss = test(model , test_data , device, loss_fn)

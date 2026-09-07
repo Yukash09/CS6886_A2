@@ -7,13 +7,19 @@ from torchvision import transforms
 from torch.utils.data import DataLoader , random_split
 from typing import Any
 
+
 def get_test_data(batch_size: int = 128) :
+
+    '''
+    Loads the test data from the dataset
+    '''
 
     test_transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
     ])
 
+    # The path defaults to imported dataset path in Kaggle. Change it when run locally to the path where the dataset lives.
     test_data = datasets.CIFAR10(root="/kaggle/input/datasets/pankrzysiu/cifar10-python/" , train=False, download=False, transform=test_transform)
     print(f"Test Data len: {len(test_data)}")
 
@@ -22,6 +28,10 @@ def get_test_data(batch_size: int = 128) :
     return test_loader 
 
 def get_train_data(batch_size:int = 128) :
+
+    '''
+    Loads the training and validation data from the dataset with transforms applied. 
+    '''
 
     train_transform = transforms.Compose([
         transforms.RandomCrop(32, padding=4),

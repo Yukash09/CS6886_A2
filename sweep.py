@@ -5,18 +5,24 @@ from dataloader import get_test_data
 import torch.nn as nn
 
 def make_configs():
+    '''
+    Create different possible configuration for each hyperparameter variable for each allocation strategy
+    '''
+
     configs = []
 
+    # Uniform Allocation
     for bits in [2 , 3 , 4 , 5 , 6 , 8]:
         for act_bits in [4 , 6 , 8]:
             configs.append({"policy": "uniform" , "unif_bits": bits , "act_unif_bits": act_bits , "end_bits": 0 , "int_bits": 0 , "act_end_bits": 0 , "act_int_bits": 0, "mid_bits": 0, "ratio": 0.0})
 
+    # Mixed Allocation
     for end in [4 , 6 , 8]:
         for mid in [2 , 3 , 4 , 5 , 6 , 8]:
             if mid < end:
                 for act_mid in [4 , 6 , 8]:
                     configs.append({"policy": "mixed" , "unif_bits": 0 , "act_unif_bits": 0 , "end_bits": end , "int_bits": mid , "act_end_bits": 8 , "act_int_bits": act_mid, "mid_bits": 0, "ratio": 0.0})
-
+    # HAWQ Allocation
     for end in [6, 8]:
         for mid in [4, 5, 6]:
             for int_b in [2, 3, 4]:
@@ -34,6 +40,10 @@ def make_configs():
 
 
 def sweep_fn():
+    '''
+    W&B Hyperparameter sweep function.
+    '''
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     path = "./checkpoints/best_model.pth"
     test_data = get_test_data()
@@ -54,7 +64,7 @@ def sweep_fn():
             group="Quantization"
         )
 
-        accuracy , w_ratio , a_ratio = evaluate_quantize(model , test_data , device , wandb.config , mode="PTQ", loss_fn=loss_fn)
+        accuracy , w_ratio , a_ratio = evaluate_quantize(model , test_data , device , wandb.config, loss_fn=loss_fn)
 
         wandb.log({
             "baseline_acc": baseline_acc,

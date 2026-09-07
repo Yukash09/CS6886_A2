@@ -7,6 +7,8 @@ import wandb
 
 
 def train():
+
+    # Wandb Initialization 
     wandb.init(project="CS6886_Assignment2", group="Fine-Tuning")
     cfg = wandb.config
 
@@ -102,6 +104,7 @@ def train():
 
 
 if __name__ == "__main__":
+    # Configuration for W&B sweep
     config = {
         'method': 'grid',
         'name': "Fine-Tuning-Sweep",
@@ -112,7 +115,7 @@ if __name__ == "__main__":
         'parameters':{
             'lr':{'values': [0.001, 0.0005, 0.0001]},
             'batch_size':{'values':[64 , 128]},
-            'epoch':{'values':[15 , 25]}
+            'epoch':{'values':[15 , 20 , 25]}
         }
     }
 
